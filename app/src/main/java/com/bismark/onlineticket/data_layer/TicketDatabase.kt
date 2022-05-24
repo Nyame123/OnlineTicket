@@ -7,6 +7,8 @@ import com.bismark.onlineticket.data_layer.dao.TicketDao
 import com.bismark.onlineticket.data_layer.entities.Cart
 import com.bismark.onlineticket.data_layer.entities.Ticket
 
+const val DATABASE_NAME = "onlineTicket"
+
 @Database(
     entities = [
         Cart::class,

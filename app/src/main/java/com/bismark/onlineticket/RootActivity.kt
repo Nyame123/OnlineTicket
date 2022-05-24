@@ -11,7 +11,7 @@ import android.view.Menu
 import android.view.MenuItem
 import com.bismark.onlineticket.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity() {
+class RootActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
