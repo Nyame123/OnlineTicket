@@ -1,12 +1,17 @@
-package com.bismark.onlineticket
+package com.bismark.onlineticket.Cart
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import androidx.navigation.fragment.findNavController
+import com.bismark.onlineticket.R
 import com.bismark.onlineticket.databinding.FragmentCartScreenBinding
+import javax.inject.Inject
+import kotlin.reflect.KClass
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -14,10 +19,13 @@ import com.bismark.onlineticket.databinding.FragmentCartScreenBinding
 class CartScreen : Fragment() {
 
     private var _binding: FragmentCartScreenBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
+
+    @Inject
+    lateinit var viewModelFactory: CartViewModelFactory
+    private val cartViewModel: CartViewModel by lazy {
+        ViewModelProvider(this, viewModelFactory).get(CartViewModel::class.java)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,7 +34,6 @@ class CartScreen : Fragment() {
 
         _binding = FragmentCartScreenBinding.inflate(inflater, container, false)
         return binding.root
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

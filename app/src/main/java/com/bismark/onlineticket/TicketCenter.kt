@@ -14,9 +14,6 @@ import com.bismark.onlineticket.databinding.FragmentTicketCenterBinding
 class TicketCenter : Fragment() {
 
     private var _binding: FragmentTicketCenterBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(

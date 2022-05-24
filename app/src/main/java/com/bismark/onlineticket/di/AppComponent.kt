@@ -1,6 +1,6 @@
 package com.bismark.onlineticket.di
 
-import com.bismark.onlineticket.CartScreen
+import com.bismark.onlineticket.Cart.CartScreen
 import com.bismark.onlineticket.TicketCenter
 import dagger.Component
 import javax.inject.Singleton
