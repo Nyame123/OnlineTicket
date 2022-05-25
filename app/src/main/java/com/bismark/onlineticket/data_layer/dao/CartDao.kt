@@ -13,10 +13,10 @@ interface CartDao {
     suspend fun insertCart(carts: List<Cart>)
 
     @Transaction
-    @Query("Select * from ticket")
-    suspend fun getAllCarts(): Flow<List<Cart>>
+    @Query("Select * from Cart")
+    fun getAllCarts(): Flow<List<Cart>>
 
-    @Query("Select * from cart where id = :id")
+    @Query("Select * from cart where cartId = :id")
     suspend fun getCart(id: Int): Cart
 
     @Update
@@ -24,4 +24,7 @@ interface CartDao {
 
     @Delete
     suspend fun deleteCart(cart: Cart)
+
+    @Query("Delete from Cart")
+    suspend fun deleteAll()
 }

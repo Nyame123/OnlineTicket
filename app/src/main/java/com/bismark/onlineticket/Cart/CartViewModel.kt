@@ -1,42 +1,75 @@
 package com.bismark.onlineticket.Cart
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import com.bismark.onlineticket.data_layer.entities.Cart
+import android.util.Log
+import androidx.lifecycle.*
+import com.bismark.onlineticket.data_layer.entities.CartWithTicket
 import com.bismark.onlineticket.di.RoomTicketProvider
-import kotlinx.coroutines.flow.collect
-import javax.inject.Inject
-import javax.inject.Provider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
-class CartViewModel @Inject constructor(
-    val ticketProvider: RoomTicketProvider
-) : ViewModel(){
-    private var _cartMutableLiveData: MutableLiveData<List<Cart>> = MutableLiveData()
-    val cartLiveData: LiveData<List<Cart>> = _cartMutableLiveData
+class CartViewModel constructor(
+    private val cartProvider: RoomTicketProvider
+) : ViewModel() {
+    private var _cartMutableLiveData: MutableLiveData<List<CartWithTicket>> = MutableLiveData()
+    val cartLiveData: LiveData<List<CartWithTicket>> = _cartMutableLiveData
 
-    suspend fun fetchAllCartItems() {
-        ticketProvider.getCardDao().getAllCarts()
-            .collect {
-                _cartMutableLiveData.value = it
-            }
-    }
-}
+    private var _noCartItemMutableLiveData: MutableLiveData<Unit> = MutableLiveData()
+    val noCartItemiveData: LiveData<Unit> = _noCartItemMutableLiveData
 
-class CartViewModelFactory @Inject constructor(
-    private val viewModelMap: Map<Class<out ViewModel>, @JvmSuppressWildcards Provider<out ViewModel>>
-) : ViewModelProvider.Factory {
+    private var _subtotalCost: MutableLiveData<Float> = MutableLiveData()
+    val subtotalCostLivaData: LiveData<Float> = _subtotalCost
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        val creator = viewModelMap[modelClass] ?: viewModelMap.asIterable().firstOrNull {
-            modelClass.isAssignableFrom(it.key)
-        }?.value ?: throw IllegalArgumentException("unknown model class $modelClass")
-        return try {
-            creator.get() as T
-        } catch (e: Exception) {
-            throw RuntimeException(e)
+    val cartWithTicketList = mutableListOf<CartWithTicket>()
+
+    fun fetchAllCartItems() {
+        viewModelScope.launch {
+            cartProvider.getCardDao().getAllCarts()
+                .map { cartList ->
+                    cartList.map {
+                        val ticket = cartProvider.getTicketDao().getTicket(it.ticketId)
+                        CartWithTicket(it, ticket)
+                    }
+                }.flowOn(Dispatchers.Default)
+                .catch {
+                    Log.d("Flow Error", it.message.toString())
+                }
+                .collect {
+                    cartWithTicketList.addAll(it)
+                    calculateSubtotal(cartWithTicketList)
+                    _cartMutableLiveData.value = it
+                }
         }
     }
 
+    fun calculateSubtotal(cartWithTicket: List<CartWithTicket>) {
+        viewModelScope.launch {
+            if (cartWithTicket.isNotEmpty()) {
+                val result = cartWithTicket.asFlow()
+                    .map { cart ->
+                        cart.ticket.price * cart.cart.noOfTicket
+                    }
+                    .flowOn(Dispatchers.Default)
+                    .catch {
+                        Log.d("Flow Subtotal Error", it.message.toString())
+                    }
+                    .reduce { accumulator, value ->
+                        accumulator + value
+                    }.toFloat()
+
+                _subtotalCost.value = result
+            }else{
+                _noCartItemMutableLiveData.value = Unit
+            }
+        }
+    }
+}
+
+class CartViewModelFactory constructor(
+    private val cartProvider: RoomTicketProvider
+) : ViewModelProvider.Factory {
+
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        return CartViewModel(cartProvider) as T
+    }
 }
