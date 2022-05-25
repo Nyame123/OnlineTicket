@@ -14,9 +14,9 @@ interface TicketDao {
 
     @Transaction
     @Query("Select * from ticket")
-    suspend fun getAllTicket(): Flow<List<Ticket>>
+    fun getAllTicket(): Flow<List<Ticket>>
 
-    @Query("Select * from ticket where id = :id")
+    @Query("Select * from ticket where ticketId = :id")
     suspend fun getTicket(id: Int): Ticket
 
     @Update
@@ -24,4 +24,7 @@ interface TicketDao {
 
     @Delete
     suspend fun deleteTicket(ticket: Ticket)
+
+    @Query("Delete from ticket")
+    suspend fun deleteAll()
 }
