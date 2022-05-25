@@ -4,6 +4,10 @@ buildscript {
         room_version ='2.4.2'
         room = '2.3.0'
         dagger_version = '2.40'
+        coroutineCoreVersion = '1.5.1'
+        supportTestVersion = '1.4.0'
+        mockitoVersion = '3.12.4'
+        supportJunitTestVersion = '1.1.3'
     }
 }
 

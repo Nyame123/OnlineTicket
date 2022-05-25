@@ -33,13 +33,13 @@ class OnlineTicketApp : Application() {
 
         appComponent.inject(this)
 
-        doTransaction(applicationContext)
+        doTransaction()
     }
 
-    fun doTransaction(context: Context) = runBlocking {
+    fun doTransaction() = runBlocking {
 
-        val ticketDao = (context as OnlineTicketApp).database.ticketDao()
-        val cartDao = (context as OnlineTicketApp).database.cartDao()
+        val ticketDao = database.ticketDao()
+        val cartDao = database.cartDao()
         //first
         val ticket1 = Ticket(
             itemName = "Football Ticket",
