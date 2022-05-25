@@ -1,17 +1,14 @@
 package com.bismark.onlineticket.ticket
 
 import androidx.lifecycle.*
-import com.bismark.onlineticket.data_layer.entities.Cart
 import com.bismark.onlineticket.data_layer.entities.Ticket
 import com.bismark.onlineticket.di.RoomTicketProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class TicketViewModel constructor(
-    private val ticketProvider: RoomTicketProvider
+    private val ticketRepository: TicketRepository,
 ) : ViewModel() {
 
     private var _ticketMutableLiveData: MutableLiveData<List<Ticket>> = MutableLiveData()
@@ -19,8 +16,7 @@ class TicketViewModel constructor(
 
     fun fetchAllTicketItems() {
         viewModelScope.launch {
-            ticketProvider.getTicketDao().getAllTicket()
-                .flowOn(Dispatchers.Default)
+            ticketRepository.fetchAllTickets()
                 .collect {
                     _ticketMutableLiveData.value = it
                 }
@@ -29,24 +25,17 @@ class TicketViewModel constructor(
 
     fun addToCart(ticket: Ticket, noTicket: Int) {
         viewModelScope.launch{
-            withContext(Dispatchers.Default){
-                val cart = Cart(
-                    noOfTicket = noTicket,
-                    ticketId = ticket.ticketId
-                )
-
-                ticketProvider.getCardDao().insertCart(cart)
-            }
+            ticketRepository.addTicketToCart(noTicket, ticket)
         }
     }
 }
 
 class TicketViewModelFactory constructor(
-    private val cartProvider: RoomTicketProvider
+    private val ticketProvider: RoomTicketProvider
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        return TicketViewModel(cartProvider) as T
+        val ticketRepository = TicketRepository(ticketProvider, Dispatchers.Default)
+        return TicketViewModel(ticketRepository) as T
     }
-
 }

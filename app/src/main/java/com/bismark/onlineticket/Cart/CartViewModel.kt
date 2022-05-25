@@ -1,15 +1,14 @@
 package com.bismark.onlineticket.Cart
 
-import android.util.Log
 import androidx.lifecycle.*
 import com.bismark.onlineticket.data_layer.entities.CartWithTicket
 import com.bismark.onlineticket.di.RoomTicketProvider
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class CartViewModel constructor(
-    private val cartProvider: RoomTicketProvider
+    private val cartRepository: CartRepository
 ) : ViewModel() {
     private var _cartMutableLiveData: MutableLiveData<List<CartWithTicket>> = MutableLiveData()
     val cartLiveData: LiveData<List<CartWithTicket>> = _cartMutableLiveData
@@ -24,16 +23,7 @@ class CartViewModel constructor(
 
     fun fetchAllCartItems() {
         viewModelScope.launch {
-            cartProvider.getCardDao().getAllCarts()
-                .map { cartList ->
-                    cartList.map {
-                        val ticket = cartProvider.getTicketDao().getTicket(it.ticketId)
-                        CartWithTicket(it, ticket)
-                    }
-                }.flowOn(Dispatchers.Default)
-                .catch {
-                    Log.d("Flow Error", it.message.toString())
-                }
+            cartRepository.getAllCartItemsFromLocal()
                 .collect {
                     cartWithTicketList.addAll(it)
                     calculateSubtotal(cartWithTicketList)
@@ -50,18 +40,7 @@ class CartViewModel constructor(
 
     private suspend fun calculate(cartWithTicket: List<CartWithTicket>) {
         if (cartWithTicket.isNotEmpty()) {
-            val result = cartWithTicket.asFlow()
-                .map { cart ->
-                    cart.ticket.price * cart.cart.noOfTicket
-                }
-                .flowOn(Dispatchers.Default)
-                .catch {
-                    Log.d("Flow Subtotal Error", it.message.toString())
-                }
-                .reduce { accumulator, value ->
-                    accumulator + value
-                }.toFloat()
-
+            val result = cartRepository.reduceCartListToTotal(cartWithTicket)
             _subtotalCost.value = result
         } else {
             _noCartItemMutableLiveData.value = Unit
@@ -74,6 +53,7 @@ class CartViewModelFactory constructor(
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        return CartViewModel(cartProvider) as T
+        val cartRepository = CartRepository(cartProvider, Dispatchers.Default)
+        return CartViewModel(cartRepository) as T
     }
 }

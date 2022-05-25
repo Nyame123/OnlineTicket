@@ -56,6 +56,7 @@ class TicketCenter : Fragment() {
         ticketViewModel.fetchAllTicketItems()
         setUpRecyclerView()
         ticketViewModel.ticketLiveData.observe(viewLifecycleOwner) { tickets ->
+            ticketList.clear()
             ticketList.addAll(tickets)
             ticketAdapter.notifyDataSetChanged()
         }
