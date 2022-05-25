@@ -44,23 +44,27 @@ class CartViewModel constructor(
 
     fun calculateSubtotal(cartWithTicket: List<CartWithTicket>) {
         viewModelScope.launch {
-            if (cartWithTicket.isNotEmpty()) {
-                val result = cartWithTicket.asFlow()
-                    .map { cart ->
-                        cart.ticket.price * cart.cart.noOfTicket
-                    }
-                    .flowOn(Dispatchers.Default)
-                    .catch {
-                        Log.d("Flow Subtotal Error", it.message.toString())
-                    }
-                    .reduce { accumulator, value ->
-                        accumulator + value
-                    }.toFloat()
+            calculate(cartWithTicket)
+        }
+    }
 
-                _subtotalCost.value = result
-            }else{
-                _noCartItemMutableLiveData.value = Unit
-            }
+    private suspend fun calculate(cartWithTicket: List<CartWithTicket>) {
+        if (cartWithTicket.isNotEmpty()) {
+            val result = cartWithTicket.asFlow()
+                .map { cart ->
+                    cart.ticket.price * cart.cart.noOfTicket
+                }
+                .flowOn(Dispatchers.Default)
+                .catch {
+                    Log.d("Flow Subtotal Error", it.message.toString())
+                }
+                .reduce { accumulator, value ->
+                    accumulator + value
+                }.toFloat()
+
+            _subtotalCost.value = result
+        } else {
+            _noCartItemMutableLiveData.value = Unit
         }
     }
 }
